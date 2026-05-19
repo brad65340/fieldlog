@@ -11,17 +11,22 @@ export function useProducts() {
 
   useEffect(() => {
     let cancelled = false
-    const supabase = createClient()
-    supabase
-      .from('products')
-      .select('*')
-      .order('name')
-      .then(({ data, error: e }) => {
+    async function load() {
+      try {
+        const supabase = createClient()
+        const { data, error: e } = await supabase.from('products').select('*').order('name')
         if (cancelled) return
         if (e) setError(e.message)
         else setProducts(data ?? [])
-        setLoading(false)
-      })
+      } catch (err) {
+        if (cancelled) return
+        console.error('[useProducts] load failed', err)
+        setError(err instanceof Error ? err.message : 'Failed to load products')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
     return () => {
       cancelled = true
     }

@@ -11,17 +11,22 @@ export function useFields() {
 
   useEffect(() => {
     let cancelled = false
-    const supabase = createClient()
-    supabase
-      .from('fields')
-      .select('*')
-      .order('name')
-      .then(({ data, error: e }) => {
+    async function load() {
+      try {
+        const supabase = createClient()
+        const { data, error: e } = await supabase.from('fields').select('*').order('name')
         if (cancelled) return
         if (e) setError(e.message)
         else setFields(data ?? [])
-        setLoading(false)
-      })
+      } catch (err) {
+        if (cancelled) return
+        console.error('[useFields] load failed', err)
+        setError(err instanceof Error ? err.message : 'Failed to load fields')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
     return () => {
       cancelled = true
     }

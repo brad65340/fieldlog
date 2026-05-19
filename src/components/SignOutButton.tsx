@@ -11,10 +11,15 @@ export function SignOutButton() {
 
   async function signOut() {
     setSigning(true)
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.refresh()
-    router.push(ROUTES.login)
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.refresh()
+      router.push(ROUTES.login)
+    } catch (err) {
+      console.error('[SignOutButton] signOut failed', err)
+      setSigning(false)
+    }
   }
 
   return (
