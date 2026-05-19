@@ -1,6 +1,11 @@
 'use client'
 
-import { BRAND, COMPLIANCE_STATUS, type ComplianceStatus } from '@/constants'
+import {
+  BRAND,
+  COMPLIANCE_PALETTE,
+  COMPLIANCE_STATUS,
+  type ComplianceStatus,
+} from '@/constants'
 
 interface Props {
   applicationId: string
@@ -10,18 +15,8 @@ interface Props {
   onLogAnother: () => void
 }
 
-const COMPLIANT_BG = '#ECFDF5'
-const COMPLIANT_FG = '#065F46'
-const FLAGGED_BG = '#FEF2F2'
-const PENDING_BG = '#F4F4F5'
-const PENDING_FG = '#3F3F46'
-
 export function ComplianceResult({ applicationId, status, flags, submittedAt, onLogAnother }: Props) {
-  const palette = (() => {
-    if (status === COMPLIANCE_STATUS.compliant) return { bg: COMPLIANT_BG, fg: COMPLIANT_FG, label: 'COMPLIANT' }
-    if (status === COMPLIANCE_STATUS.flagged) return { bg: FLAGGED_BG, fg: BRAND.error, label: 'FLAGGED' }
-    return { bg: PENDING_BG, fg: PENDING_FG, label: 'PENDING' }
-  })()
+  const palette = COMPLIANCE_PALETTE[status]
 
   return (
     <div className="rounded-lg p-6" style={{ backgroundColor: palette.bg, color: palette.fg }}>

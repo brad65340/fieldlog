@@ -33,3 +33,15 @@ export const USER_ROLES = {
 
 export type ComplianceStatus = (typeof COMPLIANCE_STATUS)[keyof typeof COMPLIANCE_STATUS]
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES]
+
+// Shared color tokens for compliance status. Used by ComplianceBadge (lists,
+// tables) and ComplianceResult (full submit-confirmation panel). One source
+// keeps badges and panels visually consistent.
+export const COMPLIANCE_PALETTE: Record<
+  ComplianceStatus,
+  { bg: string; fg: string; label: string }
+> = {
+  [COMPLIANCE_STATUS.compliant]: { bg: '#ECFDF5', fg: '#065F46', label: 'COMPLIANT' },
+  [COMPLIANCE_STATUS.flagged]:   { bg: '#FEF2F2', fg: BRAND.error, label: 'FLAGGED' },
+  [COMPLIANCE_STATUS.pending]:   { bg: '#F4F4F5', fg: '#3F3F46', label: 'PENDING' },
+}
