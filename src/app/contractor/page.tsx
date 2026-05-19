@@ -1,19 +1,23 @@
-import { BRAND } from '@/constants'
+import { ApplicationForm } from '@/components/contractor/ApplicationForm'
+import { OfflineBanner } from '@/components/contractor/OfflineBanner'
+import { BRAND, ROUTES } from '@/constants'
+import Link from 'next/link'
 
 export default function ContractorHome() {
   return (
-    <main
-      className="min-h-screen px-6 py-12"
-      style={{ backgroundColor: BRAND.background, color: BRAND.text }}
-    >
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-semibold" style={{ color: BRAND.primary }}>
-          Contractor
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: BRAND.textLight }}>
-          Application logging form lands here in Phase 2.
-        </p>
-      </div>
-    </main>
+    <div style={{ backgroundColor: BRAND.background, color: BRAND.text }} className="min-h-screen">
+      <OfflineBanner />
+      <main className="mx-auto max-w-md px-4 py-6">
+        <header className="mb-6 flex items-center justify-between">
+          <h1 className="text-xl font-semibold" style={{ color: BRAND.primary }}>
+            Log application
+          </h1>
+          <Link href={ROUTES.contractorHistory} className="text-sm underline" style={{ color: BRAND.textLight }}>
+            History
+          </Link>
+        </header>
+        <ApplicationForm />
+      </main>
+    </div>
   )
 }

@@ -5,6 +5,7 @@ export const BRAND = {
   text: '#1a1a2e',
   textLight: '#4a4a68',
   border: '#e8e7e5',
+  error: '#991B1B',
 } as const
 
 export const TAGLINE = 'Contractors logged. You verify. Compliant operations.'
