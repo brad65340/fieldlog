@@ -35,8 +35,14 @@ export default function LoginPage() {
       .eq('id', signInData.user.id)
       .single()
 
-    if (profileError || !profile) {
-      setError('Account found but no profile is set up. Contact your operation manager.')
+    if (profileError) {
+      setError(`Profile lookup failed: ${profileError.message} [${profileError.code ?? 'no code'}]`)
+      await supabase.auth.signOut()
+      setSubmitting(false)
+      return
+    }
+    if (!profile) {
+      setError('Profile lookup returned no row (post-RLS). Contact your operation manager.')
       await supabase.auth.signOut()
       setSubmitting(false)
       return
