@@ -6,72 +6,106 @@
 
 ---
 
+## Decisions Locked Before Implementation (2026-05-19)
+
+Confirmed before any Phase 3 code lands. These supersede the original module specs where they conflict. Phase 5 must respect them.
+
+**Layout / structure:**
+- **A1.** Manager dashboard is a two-column layout. Left column ~60% (filter bar + application table). Right column ~40% with placeholder slots (rendered in Phase 5: compliance donut, WeatherPanel, ForecastStrip, FieldStatusCards). Full-width slot below both columns for the Leaflet map (Phase 5). Mobile collapses to single column, table-first.
+- **A2.** Application detail is a two-column layout: details + product info on the left, weather + label requirements on the right. Single column on mobile.
+- **A3.** `StatsRow` lives at `src/components/manager/StatsRow.tsx`. Compliant green is `#16A34A`, flagged red is `#DC2626`. No pulse animation in Phase 3 (Phase 5 adds it).
+- **A4.** `ComplianceBadge` already exists at `src/components/ui/ComplianceBadge.tsx` (Phase 2.4). Reuse it. Do NOT build a duplicate in `src/components/manager/`. Phase 3 ships without status icons (text-only labels); Phase 5 can add icons if desired.
+
+**Data shape:**
+- **B1.** Application detail fetch joins `operations(name)` even though the detail UI doesn't display it -- Phase 4 PDF needs it and reuses the same fetch.
+- **B2.** Product join includes `re_entry_interval_hours` and `pre_harvest_interval_days` -- Phase 5 Field Status Cards compute re-entry status from these.
+- **B3.** `useManagerApplications` and the detail fetch both include `lat` and `lng` on applications, and `lat` and `lng` on fields (already in select). Phase 5 map needs these.
+- **B4.** `useManagerApplications` implements `setInterval(refetch, 30000)` -- 30-second polling. Cleanup on unmount. Manual refresh button calls `refetch()` directly. (Decision was originally 5s; tightened to 30s to reduce request volume per open dashboard session.)
+- **B5.** `useContractors` returns `ContractorWithStats`: per-contractor `total_applications`, `compliant_count`, `flagged_count`, `last_application_at`. Computed in the hook from a single joined query, not separate fetches.
+
+**Definitions:**
+- **C1.** "This season" = current calendar year (Jan 1 of current year through now).
+- **C2.** "Active contractor" = distinct `contractor_id` with at least one application in the current calendar year.
+- **C3.** Date range filter:
+  - "This Week" = Monday 00:00 of current ISO week through now.
+  - "This Month" = day 1 00:00 of current calendar month through now.
+  - "All Time" = no date filter.
+
+**Security:**
+- **D3.** Temporary password generation in `POST /api/contractors` uses `crypto.randomUUID().replace(/-/g, '')` (32 hex chars, cryptographically secure). NOT `Math.random()`. The `tempPassword` is returned in the response body once; it must never be written to server logs.
+
+**Architecture:**
+- **F.** The joined application-by-id fetch lives at `src/lib/queries/getApplicationById.ts`. Both `src/app/manager/applications/[id]/page.tsx` (Phase 3) and `src/app/api/export/[id]/route.ts` (Phase 4) import from it. Single source of truth for the joined query shape.
+
+---
+
 ## Module 3.1 — Manager Applications Dashboard
 
 This is the most important screen in the demo. The flagged applications must be visually obvious.
 
 ### Page: src/app/manager/page.tsx
 
-Main dashboard. Server component. Passes data to client components.
+Main dashboard. Server component. Two-column layout per A1: left column (60%) holds FilterBar + ApplicationTable, right column (40%) holds placeholder slots for Phase 5 widgets (ComplianceChart, WeatherPanel, ForecastStrip, FieldStatusCards). Full-width slot below both columns for the Phase 5 ApplicationMap. Mobile collapses to single column, table-first.
 
 ### Hook: src/hooks/useManagerApplications.ts
 
 ```typescript
-// Returns ALL applications in the operation
-// Joins: profiles(first_name, last_name), fields(name), products(name, epa_reg_number),
-//        weather_snapshots(wind_speed, temperature, conditions)
-// Orders by submitted_at DESC
-// Supports filters: contractor_id, field_id, compliance_status, date_range
-// Limit 100 for dashboard, cursor paginate for history
-// Returns: { applications: ApplicationWithRelations[], loading, error, refetch }
+// Returns ALL applications in the operation visible to the current manager.
+// Joins (B2, B3):
+//   profiles(first_name, last_name)
+//   fields(name, lat, lng)
+//   products(name, epa_reg_number, re_entry_interval_hours, pre_harvest_interval_days)
+//   weather_snapshots(wind_speed, temperature, conditions)
+// Applications selected with lat + lng (B3).
+// Orders by submitted_at DESC. Limit 100.
+// Supports filters: contractor_id, compliance_status, date_range
+//   (date_range bounded per C3: 'week' | 'month' | 'all').
+// Polls via setInterval(refetch, 30000) (B4). Cleanup on unmount.
+// Returns: { applications, loading, error, refetch, filters, setFilters }
 ```
 
 ### Component: src/components/manager/ApplicationTable.tsx
 
-**Mobile: Card layout. Desktop: Table layout.**
+Lives in the left column of the dashboard layout (per A1). **Mobile: card layout. Desktop: table layout.**
 
 Each row/card shows:
 - Contractor name (first + last)
 - Field name
 - Product name
 - Application date/time
-- ComplianceBadge (see below)
+- ComplianceBadge (reused from `src/components/ui/ComplianceBadge.tsx` per A4)
 - Weather snapshot: wind speed + temperature (small text)
-- Arrow/chevron to detail view
+- Chevron / row-clickable to detail view
 
 **FLAGGED rows must visually stand out.** Use:
 - Red left border on card
-- Red background tint on table row
-- ComplianceBadge in red
+- Light red background tint on table row
+- ComplianceBadge already renders in red for flagged status
 
-### Component: src/components/manager/ComplianceBadge.tsx
+### ComplianceBadge
 
-```typescript
-// Status: 'compliant' | 'flagged' | 'pending'
-
-// COMPLIANT: green background, white text, checkmark icon, "COMPLIANT"
-// FLAGGED: red background, white text, warning icon, "FLAGGED"
-// PENDING: gray background, dark text, clock icon, "PENDING"
-
-// Used in: ApplicationTable, ApplicationDetail, ContractorList summary
-```
+Reuse `src/components/ui/ComplianceBadge.tsx` from Phase 2.4 (per A4). Text-only labels (`COMPLIANT` / `FLAGGED` / `PENDING`) -- no icons in Phase 3. Phase 5 can add icons if desired.
 
 ### Filter Bar (src/components/manager/FilterBar.tsx)
 
 Filters on dashboard:
 - Status filter: All / Compliant / Flagged / Pending (tab buttons)
 - Contractor filter: dropdown (all contractors in operation)
-- Date range: This Week / This Month / All Time (tab buttons)
+- Date range: This Week / This Month / All Time (tab buttons), bounded per C3:
+  - "This Week" = Monday 00:00 of the current ISO week through now
+  - "This Month" = day 1 00:00 of the current calendar month through now
+  - "All Time" = no date filter
 
-Filters update the useManagerApplications hook query parameters.
+Filters update the `useManagerApplications` hook query parameters.
 
-### Stats Row (top of dashboard)
+### Stats Row (src/components/manager/StatsRow.tsx, per A3)
 
-Show 4 stat cards:
-1. Total Applications (this spray season)
-2. Compliant (count + percentage)
-3. Flagged (count -- RED if > 0)
-4. Active Contractors
+Four stat cards. Computed from the same applications list the hook returns -- no separate fetch.
+
+1. **Total Applications** (this season, per C1: current calendar year). Brand navy background, white text.
+2. **Compliant** (count + percentage of total). Green `#16A34A` background, white text.
+3. **Flagged** (count). Red `#DC2626` background, white text. No pulse animation in Phase 3 (Phase 5 adds it).
+4. **Active Contractors** (per C2: distinct `contractor_id` with at least one application in the current calendar year). Brand navy background, white text.
 
 ### Checklist
 - [ ] Dashboard loads all applications for operation
@@ -87,13 +121,37 @@ Show 4 stat cards:
 
 **The deep-dive view. Judges will click into a flagged application.**
 
+### Shared fetch: src/lib/queries/getApplicationById.ts (per F)
+
+Server-side helper. Imported by both the detail page (Phase 3) and the PDF export route (Phase 4). Joins (per B1, B2, B3):
+- `profiles(first_name, last_name)`
+- `fields(name, acreage, lat, lng)`
+- `operations(name)` -- detail UI doesn't display it, but Phase 4 PDF does
+- `products(name, epa_reg_number, active_ingredient, restricted_use, max_wind_speed, min_temp, max_temp, max_rate_per_acre, rate_unit, re_entry_interval_hours, pre_harvest_interval_days)`
+- `weather_snapshots(*)`
+
+Returns the joined row or `null` if the application doesn't exist OR doesn't belong to the caller's operation. The 404 vs 401 distinction is the caller's responsibility (per Hard Rule 7, return 404 for unauthorized resources).
+
 ### Page: src/app/manager/applications/[id]/page.tsx
 
-Server component. Fetches application by ID with full joins. Verifies application belongs to manager's operation (return 404 if not).
+Server component. Calls `getApplicationById(id, callerOperationId)`. Returns Next.js `notFound()` if null.
 
 ### Component: src/components/manager/ApplicationDetail.tsx
 
-Layout (top to bottom):
+Two-column layout per A2. Single column on mobile.
+
+```
+Header (full width):
+  Application ID (FL-[8]) + Submitted timestamp + ComplianceBadge (large)
+  If FLAGGED: full-width red alert box with all flag reasons
+
+Two columns below header (desktop) / stacked (mobile):
+  Left column:                       Right column:
+    Application Details card           Weather at Application card
+    Product Information card           Product Label Requirements card
+
+Full-width below: Export PDF button
+```
 
 **Header:**
 - Application ID (short -- first 8 chars of UUID)
@@ -175,8 +233,10 @@ export const CreateContractorSchema = z.object({
 // 2. Rate limit
 // 3. Zod validation
 // 4. Get manager's operation_id from their profile
-// 5. Use service client to create Supabase auth user with email/password
-//    (generate temp password: Math.random().toString(36).slice(-12))
+// 5. Use service client to create Supabase auth user with email/password.
+//    Temp password (per D3) MUST use crypto.randomUUID().replace(/-/g, '')
+//    -- 32 hex chars, cryptographically secure. Do NOT use Math.random().
+//    Do NOT log the password server-side.
 // 6. Use service client to insert profile:
 //    { id: newUser.id, operation_id, role: 'contractor', first_name, last_name, email }
 // 7. Return { contractorId, tempPassword }
