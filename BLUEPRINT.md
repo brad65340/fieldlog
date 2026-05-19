@@ -278,7 +278,7 @@ UPSTASH_REDIS_REST_TOKEN=
 | Phase | Name | Status |
 |---|---|---|
 | 1 | Foundation | Complete (2026-05-19) |
-| 2 | Contractor Flow | Pending |
+| 2 | Contractor Flow | Complete (2026-05-19) |
 | 3 | Manager Dashboard | Pending |
 | 4 | Audit Export | Pending |
 | 5 | Polish + Seed Data | Pending |
