@@ -78,3 +78,30 @@
 **Reason:** Generates real PDFs with structured layout (not HTML-to-PDF screenshots). Output looks professional for an audit document.
 **Implementation:** src/lib/pdf.ts. Called from GET /api/export/[id]. Returns PDF as binary response with Content-Disposition: attachment header.
 **Alternatives considered:** jsPDF + html2canvas. Rejected -- screenshot-based PDFs look unprofessional for a compliance audit document.
+
+**Superseded by ADR-010** -- the actual package is `@react-pdf/renderer`. `react-pdf` is a viewer library, not a generator.
+
+---
+
+## ADR-009 — Pin Next.js to v15.x (not @latest)
+
+**Date:** 2026-05-18
+**Decision:** package.json pins `"next": "^15.0.0"`. Installed version: 15.5.18.
+**Reason:** Phase 1 scaffold via `create-next-app@latest` installed Next 16.2.6, whose own AGENTS.md flags major breaking changes ("This is NOT the Next.js you know -- APIs, conventions, and file structure may all differ"). Phase docs assume the Next 14/15 App Router patterns (async `cookies()`, `createServerClient` middleware shape). With a four-day deadline, fighting Next 16 unknowns is higher risk than the modest cost of pinning. React stays on 19.x; Tailwind on 4.x.
+**Implementation:** package.json `"next": "^15.0.0"`. After scaffold, deleted node_modules + pnpm-lock.yaml and reran `pnpm install` to lock to 15.x. Verified `pnpm run build` passes 0 errors.
+**Alternatives considered:**
+- Stay on Next 16 and adapt code as we hit breaks. Rejected -- unknown surface area; every snag costs deadline time.
+- Pin to a specific 15.x patch version. Rejected for now -- pnpm-lock.yaml already pins the exact version for reproducibility; `^15.0.0` allows minor patches within Next 15.
+**Revisit:** Post-vibeathon, when the Next 16 ecosystem stabilizes.
+
+---
+
+## ADR-010 — PDF library is @react-pdf/renderer (supersedes ADR-008's package name)
+
+**Date:** 2026-05-18
+**Decision:** Use `@react-pdf/renderer` for PDF generation. Installed v4.5.1.
+**Reason:** ADR-008 named `react-pdf`, but that npm package is a *viewer* (PDF.js wrapped for React) -- it renders existing PDFs in a browser, it does not generate them. The intent in ADR-008 (real structured PDFs, not HTML-to-PDF screenshots) maps to `@react-pdf/renderer`, which uses React-style component composition (`<Document>`, `<Page>`, `<Text>`, `<View>`) and outputs binary PDF server-side.
+**Implementation:** src/lib/pdf.ts. Import from `@react-pdf/renderer`. Use `renderToBuffer(<MyDoc/>)` inside the API route; return as binary response with `Content-Disposition: attachment`.
+**Alternatives considered:**
+- pdfkit / pdfmake. Rejected -- imperative API; less ergonomic than JSX in a React codebase.
+- puppeteer + HTML-to-PDF. Rejected -- heavyweight; output is screenshot-like; cold-start cost on serverless.
