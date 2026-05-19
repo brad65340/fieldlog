@@ -1,3 +1,4 @@
+import { SignOutButton } from '@/components/SignOutButton'
 import { BRAND } from '@/constants'
 
 export default function ManagerHome() {
@@ -7,10 +8,13 @@ export default function ManagerHome() {
       style={{ backgroundColor: BRAND.background, color: BRAND.text }}
     >
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-2xl font-semibold" style={{ color: BRAND.primary }}>
-          Manager
-        </h1>
-        <p className="mt-2 text-sm" style={{ color: BRAND.textLight }}>
+        <header className="mb-6 flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold" style={{ color: BRAND.primary }}>
+            Manager
+          </h1>
+          <SignOutButton />
+        </header>
+        <p className="text-sm" style={{ color: BRAND.textLight }}>
           Application dashboard lands here in Phase 3.
         </p>
       </div>
