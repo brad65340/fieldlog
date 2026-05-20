@@ -53,7 +53,7 @@ export function ComplianceChart({ applications }: Props) {
 
       <div className="relative mt-3 h-40">
         {hasData ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minHeight={160}>
             <PieChart>
               <Pie
                 data={data}

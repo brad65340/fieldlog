@@ -59,7 +59,7 @@ export function ActivityChart({ applications }: { applications: ManagerApplicati
       </div>
 
       <div className="mt-3 h-40">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height="100%" minHeight={160}>
           <BarChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: -20 }}>
             <CartesianGrid stroke={BRAND.border} vertical={false} />
             <XAxis
