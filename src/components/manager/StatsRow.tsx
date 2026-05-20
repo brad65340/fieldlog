@@ -1,13 +1,11 @@
 'use client'
 
-import { BRAND, COMPLIANCE_STATUS } from '@/constants'
+import { BRAND, COMPLIANCE_PALETTE, COMPLIANCE_STATUS } from '@/constants'
 import type { ManagerApplicationRow } from '@/hooks/useManagerApplications'
 
-// Stat-card greens/reds match Phase 5 spec exactly (A3): #16A34A / #DC2626.
-// Used here in Phase 3 so Phase 5 can drop in chart colors that read the
-// same against these cards.
-const GREEN = '#16A34A'
-const RED = '#DC2626'
+// Card colors come from COMPLIANCE_PALETTE.solid -- single source shared with
+// the RecentDots in ContractorList so visual language stays consistent and
+// changes propagate from one place.
 
 function startOfYearMs(): number {
   return new Date(new Date().getFullYear(), 0, 1).getTime()
@@ -25,8 +23,8 @@ export function StatsRow({ applications }: { applications: ManagerApplicationRow
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       <Card bg={BRAND.primary} label="Total this season" value={total} />
-      <Card bg={GREEN} label="Compliant" value={total === 0 ? '0' : `${compliant} (${pct}%)`} />
-      <Card bg={RED} label="Flagged" value={flagged} />
+      <Card bg={COMPLIANCE_PALETTE.compliant.solid} label="Compliant" value={total === 0 ? '0' : `${compliant} (${pct}%)`} />
+      <Card bg={COMPLIANCE_PALETTE.flagged.solid} label="Flagged" value={flagged} />
       <Card bg={BRAND.primary} label="Active contractors" value={activeContractors} />
     </div>
   )
