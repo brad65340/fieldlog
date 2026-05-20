@@ -24,3 +24,15 @@ export const ApplicationSubmitSchema = z.object({
 })
 
 export type ApplicationSubmitInput = z.infer<typeof ApplicationSubmitSchema>
+
+// POST /api/contractors request body (Phase 3 Module 3.3).
+// Manager creates a new contractor profile + auth user in one call. The route
+// generates a temp password server-side (per D3: crypto.randomUUID()), returns
+// it ONCE in the response, and never logs it.
+export const CreateContractorSchema = z.object({
+  email: z.email(),
+  first_name: z.string().min(1).max(100),
+  last_name: z.string().min(1).max(100),
+})
+
+export type CreateContractorInput = z.infer<typeof CreateContractorSchema>
