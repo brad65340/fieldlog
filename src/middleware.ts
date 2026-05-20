@@ -2,12 +2,29 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { ROUTES, USER_ROLES } from '@/constants'
 
+// Middleware runs on the Edge runtime in Next.js 15 (stable). @supabase/ssr's
+// createServerClient is built for that. The non-null-asserted env reads below
+// will throw a cryptic Supabase URL-parsing error if the vars are missing in
+// production, which surfaces as MIDDLEWARE_INVOCATION_FAILED with no useful
+// message in Vercel function logs. The explicit pre-check turns that into a
+// readable "missing X" error so future deploys fail loudly with the cause.
+
 export async function middleware(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !supabaseAnonKey) {
+    const missing = [
+      !supabaseUrl && 'NEXT_PUBLIC_SUPABASE_URL',
+      !supabaseAnonKey && 'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+    ].filter(Boolean).join(', ')
+    throw new Error(`[middleware] Missing required env var(s): ${missing}`)
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
