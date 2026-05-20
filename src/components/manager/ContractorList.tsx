@@ -44,7 +44,11 @@ function Card({ c }: { c: ContractorWithStats }) {
       </div>
       <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
         <Stat label="Total" value={c.total_applications} />
-        <Stat label="Flagged" value={c.flagged_count} valueColor={flaggedColor} />
+        <Stat
+          label="Flagged"
+          value={c.flagged_count > 0 ? `[!] ${c.flagged_count}` : c.flagged_count}
+          valueColor={flaggedColor}
+        />
         <Stat label="Last" value={lastApplied} />
       </dl>
     </li>

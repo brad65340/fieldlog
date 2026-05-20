@@ -65,8 +65,8 @@ function HistoryCard({ app }: { app: ContractorHistoryRow }) {
             {expanded ? 'Hide flags' : `Show ${flags.length} flag${flags.length > 1 ? 's' : ''}`}
           </button>
           {expanded && (
-            <ul className="mt-2 space-y-1 text-sm" style={{ color: BRAND.error }}>
-              {flags.map((f, i) => <li key={i}>- {f}</li>)}
+            <ul className="mt-2 space-y-1 text-sm font-medium" style={{ color: BRAND.error }}>
+              {flags.map((f, i) => <li key={i}>[!] {f}</li>)}
             </ul>
           )}
         </>

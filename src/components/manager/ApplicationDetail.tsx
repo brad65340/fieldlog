@@ -1,17 +1,16 @@
 import type { ReactNode } from 'react'
 import { ComplianceBadge } from '@/components/ui/ComplianceBadge'
-import { BRAND, COMPLIANCE_STATUS } from '@/constants'
+import { BRAND, COMPLIANCE_PALETTE, COMPLIANCE_STATUS } from '@/constants'
 import type { ApplicationDetailRow } from '@/lib/queries/getApplicationById'
 import { ExportButton } from './ExportButton'
 
 // Two-column layout per A2. Server-rendered; ExportButton is the only
 // interactive piece and lives in its own client component.
 //
-// Weather and rate values that violate the product's label limits render
-// in red. The same thresholds are used by src/lib/compliance.ts, so the
-// visual highlights agree with what the compliance engine produced.
-
-const FLAG_TINT = '#FEF2F2'
+// Violation rows use four independent signals (color + weight + underline +
+// [!] glyph prefix) so they read in any color perception -- matches the
+// audit PDF a11y pass. The top compliance alert is white-on-solid-red for
+// the same reason: no red-on-pink combos.
 
 export function ApplicationDetail({ app }: { app: ApplicationDetailRow }) {
   const flagged = app.compliance_status === COMPLIANCE_STATUS.flagged
@@ -57,12 +56,12 @@ export function ApplicationDetail({ app }: { app: ApplicationDetailRow }) {
 
         {flagged && flags.length > 0 && (
           <div
-            className="mt-4 rounded-lg border-l-4 p-4"
-            style={{ backgroundColor: FLAG_TINT, borderLeftColor: BRAND.error, color: BRAND.error }}
+            className="mt-4 rounded-lg p-4"
+            style={{ backgroundColor: COMPLIANCE_PALETTE.flagged.solid, color: '#fff' }}
           >
-            <p className="font-semibold">Compliance Issues Detected</p>
+            <p className="font-semibold">[!] Compliance Issues Detected</p>
             <ul className="mt-2 space-y-1 text-sm">
-              {flags.map((f, i) => <li key={i}>- {f}</li>)}
+              {flags.map((f, i) => <li key={i}>[!] {f}</li>)}
             </ul>
           </div>
         )}
@@ -137,8 +136,11 @@ function Row({ label, value, highlight = false }: { label: string; value: ReactN
   return (
     <div className="flex justify-between gap-2">
       <dt style={{ color: BRAND.textLight }}>{label}</dt>
-      <dd className="text-right" style={{ color: highlight ? BRAND.error : BRAND.text, fontWeight: highlight ? 600 : 400 }}>
-        {value}
+      <dd
+        className={highlight ? 'text-right underline' : 'text-right'}
+        style={{ color: highlight ? BRAND.error : BRAND.text, fontWeight: highlight ? 700 : 400 }}
+      >
+        {highlight ? <>[!] {value}</> : value}
       </dd>
     </div>
   )
