@@ -15,8 +15,11 @@ export const ROUTES = {
   login: '/login',
   contractor: '/contractor',
   contractorHistory: '/contractor/history',
+  contractorProducts: '/contractor/products',
+  contractorProduct: (id: string) => `/contractor/products/${id}`,
   manager: '/manager',
   managerContractors: '/manager/contractors',
+  managerTimetable: '/manager/timetable',
   managerApplication: (id: string) => `/manager/applications/${id}`,
 } as const
 

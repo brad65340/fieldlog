@@ -1,20 +1,17 @@
 'use client'
 
-import { BRAND, COMPLIANCE_PALETTE, type ComplianceStatus } from '@/constants'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { RecentDots } from '@/components/ui/RecentDots'
+import { BRAND } from '@/constants'
 import type { ContractorWithStats } from '@/hooks/useContractors'
-
-// Visual-status dots use COMPLIANCE_PALETTE.solid (high-contrast) PLUS a
-// glyph inside each dot (✓ / ! / ·) so the status reads without relying on
-// color -- colorblind-safe by construction. Each dot is also labelled for
-// screen readers.
-const DOT_SIZE_CLS = 'h-6 w-6 text-xs'
 
 export function ContractorList({ contractors }: { contractors: ContractorWithStats[] }) {
   if (contractors.length === 0) {
     return (
-      <p className="text-sm" style={{ color: BRAND.textLight }}>
-        No contractors yet. Use the form above to add the first one.
-      </p>
+      <EmptyState
+        title="No contractors yet"
+        body="Use the form above to add the first one."
+      />
     )
   }
 
@@ -64,27 +61,3 @@ function Stat({ label, value, valueColor }: { label: string; value: number | str
   )
 }
 
-function RecentDots({ statuses }: { statuses: ComplianceStatus[] }) {
-  if (statuses.length === 0) {
-    return <span className="text-xs" style={{ color: BRAND.textLight }}>no recent</span>
-  }
-  return (
-    <div className="flex items-center gap-1.5" role="list" aria-label="Recent application statuses (newest first)">
-      {statuses.map((s, i) => {
-        const p = COMPLIANCE_PALETTE[s]
-        return (
-          <span
-            key={i}
-            role="listitem"
-            aria-label={p.label}
-            title={p.label}
-            className={`flex items-center justify-center rounded-full font-bold text-white ${DOT_SIZE_CLS}`}
-            style={{ backgroundColor: p.solid }}
-          >
-            {p.symbol}
-          </span>
-        )
-      })}
-    </div>
-  )
-}

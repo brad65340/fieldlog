@@ -1,27 +1,16 @@
-import Link from 'next/link'
 import { ManagerDashboardClient } from '@/components/manager/ManagerDashboardClient'
-import { SignOutButton } from '@/components/SignOutButton'
-import { BRAND, ROUTES } from '@/constants'
+import { ManagerNav } from '@/components/manager/ManagerNav'
+import { BRAND } from '@/constants'
+
+export const metadata = {
+  title: 'Dashboard',
+}
 
 export default function ManagerHome() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: BRAND.background, color: BRAND.text }}>
+    <div className="min-h-screen md:pl-56" style={{ backgroundColor: BRAND.background, color: BRAND.text }}>
+      <ManagerNav active="dashboard" />
       <main className="mx-auto max-w-7xl px-4 py-6">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold" style={{ color: BRAND.primary }}>
-            Manager
-          </h1>
-          <nav className="flex items-center gap-4">
-            <Link
-              href={ROUTES.managerContractors}
-              className="text-sm underline"
-              style={{ color: BRAND.textLight }}
-            >
-              Contractors
-            </Link>
-            <SignOutButton />
-          </nav>
-        </header>
         <ManagerDashboardClient />
       </main>
     </div>

@@ -86,13 +86,73 @@ async function seed() {
   if (fieldErr || !fields) throw fieldErr ?? new Error('fields insert failed')
   const fieldByName = Object.fromEntries(fields.map((f) => [f.name, f]))
 
-  console.log('[6/7] Products (insert-if-missing by epa_reg_number)')
+  console.log('[6/7] Products (upsert by epa_reg_number -- fills new label columns on re-run)')
   const productSpecs = [
-    { name: 'Roundup PowerMax 3', epa_reg_number: '524-549',  active_ingredient: 'Glyphosate',     restricted_use: false, max_wind_speed: 10, min_temp: 40, max_temp: 90, re_entry_interval_hours: 4,  pre_harvest_interval_days: 7,  max_rate_per_acre: 64,   rate_unit: 'oz/acre' },
-    { name: 'Engenia (Dicamba)',  epa_reg_number: '7969-345', active_ingredient: 'Dicamba',        restricted_use: true,  max_wind_speed: 10, min_temp: 50, max_temp: 85, re_entry_interval_hours: 24, pre_harvest_interval_days: 14, max_rate_per_acre: 12.8, rate_unit: 'oz/acre' },
-    { name: 'Atrazine 4L',        epa_reg_number: '100-497',  active_ingredient: 'Atrazine',       restricted_use: true,  max_wind_speed: 10, min_temp: 40, max_temp: 90, re_entry_interval_hours: 12, pre_harvest_interval_days: 60, max_rate_per_acre: 32,   rate_unit: 'oz/acre' },
-    { name: 'Liberty 280 SL',     epa_reg_number: '264-829',  active_ingredient: 'Glufosinate',    restricted_use: false, max_wind_speed: 10, min_temp: 50, max_temp: 85, re_entry_interval_hours: 12, pre_harvest_interval_days: 7,  max_rate_per_acre: 32,   rate_unit: 'oz/acre' },
-    { name: 'Headline AMP',       epa_reg_number: '7969-326', active_ingredient: 'Pyraclostrobin', restricted_use: false, max_wind_speed: 10, min_temp: 40, max_temp: 85, re_entry_interval_hours: 12, pre_harvest_interval_days: 7,  max_rate_per_acre: 14.4, rate_unit: 'oz/acre' },
+    {
+      name: 'Roundup PowerMax 3', epa_reg_number: '524-549', active_ingredient: 'Glyphosate',
+      restricted_use: false, max_wind_speed: 10, min_temp: 40, max_temp: 90,
+      re_entry_interval_hours: 4, pre_harvest_interval_days: 7,
+      max_rate_per_acre: 64, rate_unit: 'oz/acre',
+      signal_word: 'Caution',
+      epa_label_url: 'https://www.cdms.net/ldat/ld8NC000.pdf',
+      sds_url: null,
+      use_classification: 'Non-restricted',
+      application_method: 'Ground or aerial',
+      target_pests: ['Annual broadleaf weeds', 'Annual grasses', 'Marestail', 'Waterhemp', 'Volunteer corn'],
+      compatible_crops: ['Corn', 'Soybean', 'Cotton', 'Wheat', 'Fallow / pre-plant burndown'],
+    },
+    {
+      name: 'Engenia (Dicamba)', epa_reg_number: '7969-345', active_ingredient: 'Dicamba',
+      restricted_use: true, max_wind_speed: 10, min_temp: 50, max_temp: 85,
+      re_entry_interval_hours: 24, pre_harvest_interval_days: 14,
+      max_rate_per_acre: 12.8, rate_unit: 'oz/acre',
+      signal_word: 'Caution',
+      epa_label_url: 'https://www.cdms.net/ldat/ldABL000.pdf',
+      sds_url: null,
+      use_classification: 'Restricted Use',
+      application_method: 'Ground only',
+      target_pests: ['Glyphosate-resistant pigweed', 'Waterhemp', 'Palmer amaranth', 'Marestail'],
+      compatible_crops: ['Dicamba-tolerant soybean', 'Corn'],
+    },
+    {
+      name: 'Atrazine 4L', epa_reg_number: '100-497', active_ingredient: 'Atrazine',
+      restricted_use: true, max_wind_speed: 10, min_temp: 40, max_temp: 90,
+      re_entry_interval_hours: 12, pre_harvest_interval_days: 60,
+      max_rate_per_acre: 32, rate_unit: 'oz/acre',
+      signal_word: 'Caution',
+      epa_label_url: 'https://www.cdms.net/ldat/ld3WF000.pdf',
+      sds_url: null,
+      use_classification: 'Restricted Use',
+      application_method: 'Ground or aerial',
+      target_pests: ['Broadleaf weeds', 'Annual grasses'],
+      compatible_crops: ['Corn', 'Sorghum'],
+    },
+    {
+      name: 'Liberty 280 SL', epa_reg_number: '264-829', active_ingredient: 'Glufosinate',
+      restricted_use: false, max_wind_speed: 10, min_temp: 50, max_temp: 85,
+      re_entry_interval_hours: 12, pre_harvest_interval_days: 7,
+      max_rate_per_acre: 32, rate_unit: 'oz/acre',
+      signal_word: 'Caution',
+      epa_label_url: 'https://www.cdms.net/ldat/ldBKN000.pdf',
+      sds_url: null,
+      use_classification: 'Non-restricted',
+      application_method: 'Ground or aerial',
+      target_pests: ['Annual broadleaf weeds', 'Annual grasses', 'Waterhemp'],
+      compatible_crops: ['LibertyLink soybean', 'LibertyLink corn', 'LibertyLink cotton', 'LibertyLink canola'],
+    },
+    {
+      name: 'Headline AMP', epa_reg_number: '7969-326', active_ingredient: 'Pyraclostrobin',
+      restricted_use: false, max_wind_speed: 10, min_temp: 40, max_temp: 85,
+      re_entry_interval_hours: 12, pre_harvest_interval_days: 7,
+      max_rate_per_acre: 14.4, rate_unit: 'oz/acre',
+      signal_word: 'Caution',
+      epa_label_url: 'https://www.cdms.net/ldat/ldCMQ000.pdf',
+      sds_url: null,
+      use_classification: 'Non-restricted',
+      application_method: 'Ground or aerial',
+      target_pests: ['Frogeye leaf spot', 'Cercospora leaf blight', 'Brown spot', 'Gray leaf spot'],
+      compatible_crops: ['Soybean', 'Corn', 'Wheat'],
+    },
   ]
   for (const spec of productSpecs) {
     const { data: existing } = await supabase
@@ -101,7 +161,12 @@ async function seed() {
       .eq('epa_reg_number', spec.epa_reg_number)
       .maybeSingle()
     if (existing) {
-      console.log(`    exists   ${spec.epa_reg_number}  ${spec.name}`)
+      const { error: uErr } = await supabase
+        .from('products')
+        .update(spec)
+        .eq('id', existing.id)
+      if (uErr) throw uErr
+      console.log(`    updated  ${spec.epa_reg_number}  ${spec.name}`)
       continue
     }
     const { error: pErr } = await supabase.from('products').insert(spec)

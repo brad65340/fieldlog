@@ -43,6 +43,13 @@ export interface Product {
   pre_harvest_interval_days: number | null
   max_rate_per_acre: number | null
   rate_unit: string
+  signal_word: string | null
+  epa_label_url: string | null
+  sds_url: string | null
+  use_classification: string | null
+  application_method: string | null
+  target_pests: string[] | null
+  compatible_crops: string[] | null
   created_at: string
 }
 

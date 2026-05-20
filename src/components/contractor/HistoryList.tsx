@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { ComplianceBadge } from '@/components/ui/ComplianceBadge'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { SkeletonRow } from '@/components/ui/Skeleton'
 import { BRAND, COMPLIANCE_STATUS } from '@/constants'
 import {
   useContractorApplications,
@@ -11,10 +13,31 @@ import {
 export function HistoryList() {
   const { applications, loading, error } = useContractorApplications()
 
-  if (loading) return <p className="text-sm" style={{ color: BRAND.textLight }}>Loading...</p>
-  if (error) return <p className="text-sm" style={{ color: BRAND.error }}>{error}</p>
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        <SkeletonRow />
+        <SkeletonRow />
+        <SkeletonRow />
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <EmptyState
+        title="Could not load your applications"
+        body={error}
+        tone="error"
+      />
+    )
+  }
   if (applications.length === 0) {
-    return <p className="text-sm" style={{ color: BRAND.textLight }}>No applications logged yet.</p>
+    return (
+      <EmptyState
+        title="No applications logged yet"
+        body="Use the Log tab to record your first application."
+      />
+    )
   }
 
   return (
@@ -48,11 +71,17 @@ function HistoryCard({ app }: { app: ContractorHistoryRow }) {
       </div>
 
       <p className="mt-2 text-xs" style={{ color: BRAND.textLight }}>
-        {new Date(app.submitted_at).toLocaleString()}
-        {w && w.wind_speed !== null && w.temperature !== null
-          ? ` - wind ${w.wind_speed} mph, ${w.temperature}F`
-          : ''}
+        {formatSubmitted(app.submitted_at)}
       </p>
+      {w && (w.wind_speed != null || w.temperature != null || w.conditions) && (
+        <p className="mt-1 text-xs" style={{ color: BRAND.textLight }}>
+          {[
+            w.wind_speed != null ? `Wind ${w.wind_speed} mph` : null,
+            w.temperature != null ? `${w.temperature}F` : null,
+            w.conditions ?? null,
+          ].filter(Boolean).join(' · ')}
+        </p>
+      )}
 
       {flagged && flags.length > 0 && (
         <>
@@ -73,4 +102,11 @@ function HistoryCard({ app }: { app: ContractorHistoryRow }) {
       )}
     </li>
   )
+}
+
+function formatSubmitted(iso: string): string {
+  const d = new Date(iso)
+  const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+  return `${date} at ${time}`
 }

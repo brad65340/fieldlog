@@ -1,5 +1,6 @@
 'use client'
 
+import { SkeletonRow } from '@/components/ui/Skeleton'
 import { BRAND } from '@/constants'
 import { useContractors } from '@/hooks/useContractors'
 import { ContractorList } from './ContractorList'
@@ -11,9 +12,13 @@ export function ContractorsClient() {
   return (
     <div className="space-y-6">
       <CreateContractorForm onCreated={refetch} />
-      {error && <p className="text-sm" style={{ color: BRAND.error }}>{error}</p>}
+      {error && <p className="text-sm font-medium" style={{ color: BRAND.error }}>[!] {error}</p>}
       {loading ? (
-        <p className="text-sm" style={{ color: BRAND.textLight }}>Loading...</p>
+        <div className="space-y-3">
+          <SkeletonRow />
+          <SkeletonRow />
+          <SkeletonRow />
+        </div>
       ) : (
         <ContractorList contractors={contractors} />
       )}

@@ -2,15 +2,18 @@ import type { ReactNode } from 'react'
 import { ComplianceBadge } from '@/components/ui/ComplianceBadge'
 import { BRAND, COMPLIANCE_PALETTE, COMPLIANCE_STATUS } from '@/constants'
 import type { ApplicationDetailRow } from '@/lib/queries/getApplicationById'
+import { ConditionsCard } from './ApplicationConditionsCard'
+import { RestrictionsCard } from './ApplicationRestrictionsCard'
 import { ExportButton } from './ExportButton'
 
 // Two-column layout per A2. Server-rendered; ExportButton is the only
 // interactive piece and lives in its own client component.
 //
-// Violation rows use four independent signals (color + weight + underline +
-// [!] glyph prefix) so they read in any color perception -- matches the
-// audit PDF a11y pass. The top compliance alert is white-on-solid-red for
-// the same reason: no red-on-pink combos.
+// Right column lives in ApplicationConditionsPanel: ConditionsCard renders
+// reading vs label limit side-by-side with green/red indicators, and
+// RestrictionsCard renders the re-entry + pre-harvest countdown blocks.
+// Violation rows here (left column) use four independent signals
+// (color + weight + underline + [!] glyph) -- same precedent as the audit PDF.
 
 export function ApplicationDetail({ app }: { app: ApplicationDetailRow }) {
   const flagged = app.compliance_status === COMPLIANCE_STATUS.flagged
@@ -24,13 +27,6 @@ export function ApplicationDetail({ app }: { app: ApplicationDetailRow }) {
   const fieldLabel = fieldAcreage != null ? `${fieldName} (${fieldAcreage} ac)` : fieldName
 
   const p = app.products
-  const w = app.weather_snapshots
-
-  const windViolation =
-    w?.wind_speed != null && p?.max_wind_speed != null && w.wind_speed > p.max_wind_speed
-  const tempLow = w?.temperature != null && p?.min_temp != null && w.temperature < p.min_temp
-  const tempHigh = w?.temperature != null && p?.max_temp != null && w.temperature > p.max_temp
-  const tempViolation = tempLow || tempHigh
   const rateViolation = p?.max_rate_per_acre != null && app.rate_applied > p.max_rate_per_acre
 
   const gpsText =
@@ -90,29 +86,8 @@ export function ApplicationDetail({ app }: { app: ApplicationDetailRow }) {
         </div>
 
         <div className="space-y-4">
-          <Card title="Weather at Application">
-            {w ? (
-              <>
-                <Row label="Wind Speed" value={w.wind_speed != null ? `${w.wind_speed} mph` : '-'} highlight={windViolation} />
-                <Row label="Wind Direction" value={w.wind_direction != null ? `${w.wind_direction} degrees` : '-'} />
-                <Row label="Temperature" value={w.temperature != null ? `${w.temperature}F` : '-'} highlight={tempViolation} />
-                <Row label="Humidity" value={w.humidity != null ? `${w.humidity}%` : '-'} />
-                <Row label="Conditions" value={w.conditions ?? '-'} />
-                <Row label="Data Source" value={w.source} />
-                <Row label="Captured" value={new Date(w.captured_at).toLocaleString()} />
-              </>
-            ) : (
-              <p className="text-sm" style={{ color: BRAND.textLight }}>
-                No weather data captured (no GPS provided at submit time).
-              </p>
-            )}
-          </Card>
-          <Card title="Product Label Requirements">
-            <Row label="Max Wind Speed" value={p?.max_wind_speed != null ? `${p.max_wind_speed} mph` : 'Not specified'} highlight={windViolation} />
-            <Row label="Temperature Range" value={p?.min_temp != null && p?.max_temp != null ? `${p.min_temp}F - ${p.max_temp}F` : 'Not specified'} highlight={tempViolation} />
-            <Row label="Re-entry Interval" value={p?.re_entry_interval_hours != null ? `${p.re_entry_interval_hours} hours` : 'Not specified'} />
-            <Row label="Pre-harvest Interval" value={p?.pre_harvest_interval_days != null ? `${p.pre_harvest_interval_days} days` : 'Not specified'} />
-          </Card>
+          <ConditionsCard app={app} />
+          <RestrictionsCard app={app} />
         </div>
       </div>
 

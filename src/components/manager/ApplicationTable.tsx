@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { ComplianceBadge } from '@/components/ui/ComplianceBadge'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { BRAND, COMPLIANCE_STATUS, ROUTES } from '@/constants'
 import type { ManagerApplicationRow } from '@/hooks/useManagerApplications'
 
@@ -19,9 +20,10 @@ const FLAGGED_TINT = '#FEF2F2'
 export function ApplicationTable({ applications }: Props) {
   if (applications.length === 0) {
     return (
-      <p className="text-sm" style={{ color: BRAND.textLight }}>
-        No applications match the current filters.
-      </p>
+      <EmptyState
+        title="No applications match the current filters"
+        body="Adjust the filter bar above, or wait for contractors to log new applications."
+      />
     )
   }
 

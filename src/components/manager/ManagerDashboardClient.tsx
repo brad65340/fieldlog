@@ -1,20 +1,36 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useMemo, useState } from 'react'
+import { SkeletonRow } from '@/components/ui/Skeleton'
 import { BRAND } from '@/constants'
+import { useFields } from '@/hooks/useFields'
 import { useManagerApplications } from '@/hooks/useManagerApplications'
+import { ActivityChart } from './ActivityChart'
 import { ApplicationTable } from './ApplicationTable'
+import { ComplianceChart } from './ComplianceChart'
+import { FieldStatusCards } from './FieldStatusCards'
 import { DEFAULT_FILTERS, FilterBar, rangeStartMs, type ManagerFilters } from './FilterBar'
+import { ForecastStrip } from './ForecastStrip'
 import { StatsRow } from './StatsRow'
+import { WeatherPanel } from './WeatherPanel'
 
-// Two-column dashboard layout per decision A1.
-// Left column (md:col-span-3 of 5 -> 60%): FilterBar + ApplicationTable.
-// Right column (md:col-span-2 of 5 -> 40%): Phase-5 placeholder slots
-//   (compliance donut, weather panel, forecast strip, field status cards).
-// Full-width row below: Phase-5 placeholder for the Leaflet map.
+// Leaflet touches window at import time, so the map is loaded client-only.
+const ApplicationMap = dynamic(() => import('./ApplicationMap'), {
+  ssr: false,
+  loading: () => <MapSkeleton />,
+})
+
+// Phase 5 layout:
+// Two-column row: left (3/5) = ApplicationTable, right (2/5) = sidebar with
+//   ComplianceChart + WeatherPanel + ForecastStrip. Sidebar height roughly
+//   matches the table so neither column trails behind with whitespace.
+// Full-width rows below the split: ActivityChart, FieldStatusCards (3-col
+// grid on md+), and the Leaflet ApplicationMap last.
 
 export function ManagerDashboardClient() {
   const { applications, loading, error, refetch } = useManagerApplications()
+  const { fields } = useFields()
   const [filters, setFilters] = useState<ManagerFilters>(DEFAULT_FILTERS)
 
   const contractors = useMemo(() => {
@@ -30,6 +46,21 @@ export function ManagerDashboardClient() {
     }
     return Array.from(map.values()).sort((a, b) => a.first_name.localeCompare(b.first_name))
   }, [applications])
+
+  // Fields with coordinates feed the WeatherPanel (one row per field) and
+  // also seed the ForecastStrip's anchor location (first alphabetically --
+  // a single 5-day forecast for the operation's general area).
+  const fieldsWithCoords = useMemo(
+    () =>
+      fields
+        .filter(
+          (f): f is typeof f & { lat: number; lng: number } =>
+            f.lat != null && f.lng != null,
+        )
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [fields],
+  )
+  const anchorField = fieldsWithCoords[0] ?? null
 
   const filtered = useMemo(() => {
     return applications.filter((a) => {
@@ -62,32 +93,37 @@ export function ManagerDashboardClient() {
       <div className="grid gap-4 md:grid-cols-5">
         <div className="md:col-span-3">
           {loading ? (
-            <p className="text-sm" style={{ color: BRAND.textLight }}>Loading...</p>
+            <div className="space-y-3">
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+              <SkeletonRow />
+            </div>
           ) : (
             <ApplicationTable applications={filtered} />
           )}
         </div>
         <aside className="space-y-3 md:col-span-2">
-          <SlotPlaceholder title="Compliance chart" sub="Phase 5 (Recharts donut)" />
-          <SlotPlaceholder title="Weather panel" sub="Phase 5 (current conditions)" />
-          <SlotPlaceholder title="5-day forecast" sub="Phase 5 (spray windows)" />
-          <SlotPlaceholder title="Field status cards" sub="Phase 5 (re-entry status)" />
+          <ComplianceChart applications={applications} />
+          <WeatherPanel fields={fieldsWithCoords} />
+          {anchorField && <ForecastStrip lat={anchorField.lat} lng={anchorField.lng} />}
         </aside>
       </div>
 
-      <SlotPlaceholder title="Application map" sub="Phase 5 (Leaflet)" height="h-64" />
+      <ActivityChart applications={applications} />
+      <FieldStatusCards fields={fields} applications={applications} />
+      <ApplicationMap applications={applications} />
     </div>
   )
 }
 
-function SlotPlaceholder({ title, sub, height = 'h-32' }: { title: string; sub: string; height?: string }) {
+function MapSkeleton() {
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded border border-dashed bg-white p-4 text-center ${height}`}
+      className="flex h-64 items-center justify-center rounded border bg-white text-sm"
       style={{ borderColor: BRAND.border, color: BRAND.textLight }}
     >
-      <p className="text-sm font-medium">{title}</p>
-      <p className="text-xs">{sub}</p>
+      Loading map...
     </div>
   )
 }

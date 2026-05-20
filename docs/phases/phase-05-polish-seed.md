@@ -12,6 +12,8 @@
 pnpm add recharts leaflet react-leaflet @types/leaflet
 ```
 
+Weather features use the existing OpenWeatherMap API key — no new keys needed.
+
 ---
 
 ## Module 5.1 — Seed Data Verification
@@ -479,7 +481,122 @@ Every API error needs an inline message, not a crashed page:
 
 ---
 
-## Module 5.8 — Landing Page (Next.js)
+## Module 5.8 — Live Weather and Field Forecast Widget
+
+OpenWeatherMap is already wired. This module adds a live weather panel and 5-day forecast to the manager dashboard and contractor form — no new API keys needed.
+
+### New API route: GET /api/weather
+
+```typescript
+// Query params: lat, lng
+// Auth: required (any role)
+// Rate limit: 60 requests per hour per user
+// Fetches: current conditions + 5-day forecast from OWM
+// Returns:
+{
+  current: {
+    wind_speed: number        // mph
+    wind_direction: number    // degrees
+    temperature: number       // fahrenheit
+    humidity: number          // percent
+    conditions: string        // "Clear", "Clouds", etc.
+    feels_like: number        // fahrenheit
+    updated_at: string        // ISO timestamp
+  },
+  forecast: Array<{
+    date: string              // "May 20"
+    high: number              // fahrenheit
+    low: number               // fahrenheit
+    conditions: string
+    wind_speed: number        // mph max for the day
+    spray_window: 'good' | 'marginal' | 'poor'
+                              // good: wind < 8mph, temp 45-85F
+                              // marginal: wind 8-12mph or temp at edge
+                              // poor: wind > 12mph or temp out of range
+  }>
+}
+```
+
+### Component: src/components/manager/WeatherPanel.tsx
+
+Place on manager dashboard, right column below compliance chart.
+
+```
+CURRENT CONDITIONS — NORTH FIELD AREA
+[Weather icon] Clear
+72.4 F  |  Humidity: 61%  |  Feels like 71 F
+
+Wind: 6.2 mph SSW
+[Green bar: 0----6.2----|----10----20]
+Status: SAFE FOR SPRAYING
+
+Updated 2 minutes ago
+```
+
+Wind bar visualization:
+- Green zone: 0 to product max wind (10 mph)
+- Red zone: above max wind
+- Current wind marker as a dot on the bar
+- Status text: SAFE FOR SPRAYING (green) or WIND TOO HIGH (red)
+
+### Component: src/components/manager/ForecastStrip.tsx
+
+5-day horizontal strip below WeatherPanel:
+
+```
+MON    TUE    WED    THU    FRI
+[sun]  [cloud][rain] [sun]  [sun]
+High 78 High 72 High 65 High 80 High 81
+Low 58  Low 54  Low 49  Low 60  Low 62
+Wind 5  Wind 8  Wind 12 Wind 4  Wind 6
+
+[GREEN]  [GREEN] [RED]  [GREEN] [GREEN]
+ GOOD     GOOD   POOR   GOOD    GOOD
+```
+
+Color-code each day card by spray_window value.
+
+### Contractor form — spray window indicator
+
+When a contractor selects a field and captures GPS, show current conditions inline:
+
+```
+CURRENT CONDITIONS AT YOUR LOCATION
+Wind: 6.2 mph  |  Temp: 72F  |  [GREEN] OK TO SPRAY
+```
+
+If wind or temp is outside the selected product's label range:
+```
+[RED] WARNING: Current conditions may violate label requirements
+Wind: 14.2 mph (max: 10 mph for Roundup PowerMax 3)
+Application will be flagged if submitted now.
+```
+
+This gives the contractor a real-time heads-up before submitting.
+
+### Field-level weather: manager timetable
+
+On the timetable page, add current conditions for each field location using its stored lat/lng:
+
+```
+NORTH FIELD                    Current: 72F, Wind 6.2 mph [GOOD]
+SOUTH CREEK FIELD              Current: 71F, Wind 7.1 mph [GOOD]
+EAST TIMBER FIELD              Current: 73F, Wind 9.8 mph [MARGINAL]
+```
+
+### Checklist
+- [ ] GET /api/weather returns current + 5-day forecast
+- [ ] WeatherPanel renders on manager dashboard
+- [ ] Wind bar shows green/red zones correctly
+- [ ] ForecastStrip shows 5 days with spray window badges
+- [ ] Contractor form shows live conditions after GPS capture
+- [ ] Warning shows when conditions violate selected product label
+- [ ] Timetable page shows per-field current conditions
+- [ ] Weather data refreshes every 10 minutes (setInterval in hook)
+
+---
+
+## Module 5.9 — Landing Page (Next.js)
 
 Convert public/index.html to src/app/page.tsx as a proper React/Tailwind page.
 
@@ -506,7 +623,7 @@ This is a 2-second visual that tells the whole story.
 
 ---
 
-## Module 5.9 — Vercel Deploy
+## Module 5.10 — Vercel Deploy
 
 1. Verify final build: `pnpm run build` -- must pass 0 errors
 2. Push all code to GitHub

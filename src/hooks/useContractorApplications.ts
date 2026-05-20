@@ -11,7 +11,11 @@ import type { Application } from '@/types'
 export type ContractorHistoryRow = Application & {
   fields: { name: string } | null
   products: { name: string; epa_reg_number: string } | null
-  weather_snapshots: { wind_speed: number | null; temperature: number | null } | null
+  weather_snapshots: {
+    wind_speed: number | null
+    temperature: number | null
+    conditions: string | null
+  } | null
 }
 
 export function useContractorApplications() {
@@ -34,7 +38,7 @@ export function useContractorApplications() {
         const { data, error: e } = await supabase
           .from('applications')
           .select(
-            '*, fields(name), products(name, epa_reg_number), weather_snapshots(wind_speed, temperature)'
+            '*, fields(name), products(name, epa_reg_number), weather_snapshots(wind_speed, temperature, conditions)'
           )
           .eq('contractor_id', user.id)
           .order('submitted_at', { ascending: false })

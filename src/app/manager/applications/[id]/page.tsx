@@ -1,10 +1,19 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ApplicationDetail } from '@/components/manager/ApplicationDetail'
-import { SignOutButton } from '@/components/SignOutButton'
+import { ManagerNav } from '@/components/manager/ManagerNav'
 import { BRAND, ROUTES } from '@/constants'
 import { getApplicationById } from '@/lib/queries/getApplicationById'
 import { createClient } from '@/lib/supabase/server'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = await params
+  return { title: `Audit FL-${id.slice(0, 8).toUpperCase()}` }
+}
 
 export default async function ManagerApplicationDetailPage({
   params,
@@ -32,14 +41,16 @@ export default async function ManagerApplicationDetailPage({
   if (!app) notFound()
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: BRAND.background, color: BRAND.text }}>
+    <div className="min-h-screen md:pl-56" style={{ backgroundColor: BRAND.background, color: BRAND.text }}>
+      <ManagerNav active="dashboard" />
       <main className="mx-auto max-w-5xl px-4 py-6">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <Link href={ROUTES.manager} className="text-sm underline" style={{ color: BRAND.textLight }}>
-            &larr; Back to dashboard
-          </Link>
-          <SignOutButton />
-        </header>
+        <Link
+          href={ROUTES.manager}
+          className="mb-4 inline-block text-sm underline"
+          style={{ color: BRAND.textLight }}
+        >
+          &larr; Back to dashboard
+        </Link>
         <ApplicationDetail app={app} />
       </main>
     </div>

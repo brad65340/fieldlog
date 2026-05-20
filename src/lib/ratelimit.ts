@@ -17,6 +17,7 @@ const LIMITS = {
   'applications:submit': { limit: 10, window: '1 m' as Duration },
   'contractors:create':  { limit: 20, window: '1 h' as Duration },
   'export:pdf':          { limit: 30, window: '1 h' as Duration },
+  'weather:fetch':       { limit: 60, window: '1 h' as Duration },
 } as const
 
 type RouteName = keyof typeof LIMITS
