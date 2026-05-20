@@ -1,0 +1,145 @@
+import type { ReactNode } from 'react'
+import { ComplianceBadge } from '@/components/ui/ComplianceBadge'
+import { BRAND, COMPLIANCE_STATUS } from '@/constants'
+import type { ApplicationDetailRow } from '@/lib/queries/getApplicationById'
+import { ExportButton } from './ExportButton'
+
+// Two-column layout per A2. Server-rendered; ExportButton is the only
+// interactive piece and lives in its own client component.
+//
+// Weather and rate values that violate the product's label limits render
+// in red. The same thresholds are used by src/lib/compliance.ts, so the
+// visual highlights agree with what the compliance engine produced.
+
+const FLAG_TINT = '#FEF2F2'
+
+export function ApplicationDetail({ app }: { app: ApplicationDetailRow }) {
+  const flagged = app.compliance_status === COMPLIANCE_STATUS.flagged
+  const flags = app.compliance_flags ?? []
+
+  const contractor = app.profiles
+    ? `${app.profiles.first_name} ${app.profiles.last_name}`
+    : '(unknown contractor)'
+  const fieldName = app.fields?.name ?? '(unknown field)'
+  const fieldAcreage = app.fields?.acreage
+  const fieldLabel = fieldAcreage != null ? `${fieldName} (${fieldAcreage} ac)` : fieldName
+
+  const p = app.products
+  const w = app.weather_snapshots
+
+  const windViolation =
+    w?.wind_speed != null && p?.max_wind_speed != null && w.wind_speed > p.max_wind_speed
+  const tempLow = w?.temperature != null && p?.min_temp != null && w.temperature < p.min_temp
+  const tempHigh = w?.temperature != null && p?.max_temp != null && w.temperature > p.max_temp
+  const tempViolation = tempLow || tempHigh
+  const rateViolation = p?.max_rate_per_acre != null && app.rate_applied > p.max_rate_per_acre
+
+  const gpsText =
+    app.lat != null && app.lng != null
+      ? `${app.lat.toFixed(5)}, ${app.lng.toFixed(5)}`
+      : 'Not captured'
+
+  return (
+    <div>
+      <header>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide" style={{ color: BRAND.textLight }}>Application</p>
+            <h1 className="font-mono text-2xl font-bold" style={{ color: BRAND.primary }}>
+              FL-{app.id.slice(0, 8)}
+            </h1>
+            <p className="text-sm" style={{ color: BRAND.textLight }}>
+              Submitted {new Date(app.submitted_at).toLocaleString()}
+            </p>
+          </div>
+          <ComplianceBadge status={app.compliance_status} />
+        </div>
+
+        {flagged && flags.length > 0 && (
+          <div
+            className="mt-4 rounded-lg border-l-4 p-4"
+            style={{ backgroundColor: FLAG_TINT, borderLeftColor: BRAND.error, color: BRAND.error }}
+          >
+            <p className="font-semibold">Compliance Issues Detected</p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {flags.map((f, i) => <li key={i}>- {f}</li>)}
+            </ul>
+          </div>
+        )}
+      </header>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="space-y-4">
+          <Card title="Application Details">
+            <Row label="Contractor" value={contractor} />
+            <Row label="Field" value={fieldLabel} />
+            <Row label="Acreage Treated" value={`${app.acreage_treated} acres`} />
+            <Row label="Target Pest" value={app.target_pest ?? 'Not specified'} />
+            <Row label="Application Start" value={new Date(app.application_start).toLocaleString()} />
+            <Row label="Application End" value={app.application_end ? new Date(app.application_end).toLocaleString() : 'Not recorded'} />
+            <Row label="GPS Coordinates" value={gpsText} />
+            <Row label="Notes" value={app.notes && app.notes.length > 0 ? app.notes : 'None'} />
+          </Card>
+          <Card title="Product Information">
+            <Row label="Product" value={p?.name ?? '(unknown)'} />
+            <Row label="EPA Registration No." value={p?.epa_reg_number ?? '-'} />
+            <Row label="Active Ingredient" value={p?.active_ingredient ?? '-'} />
+            <Row label="Restricted Use" value={p?.restricted_use ? 'Yes' : 'No'} />
+            <Row label="Application Rate" value={`${app.rate_applied} ${app.rate_unit}`} highlight={rateViolation} />
+            <Row label="Max Rate (label)" value={p?.max_rate_per_acre != null ? `${p.max_rate_per_acre} ${p.rate_unit ?? ''}`.trim() : 'Not specified'} />
+          </Card>
+        </div>
+
+        <div className="space-y-4">
+          <Card title="Weather at Application">
+            {w ? (
+              <>
+                <Row label="Wind Speed" value={w.wind_speed != null ? `${w.wind_speed} mph` : '-'} highlight={windViolation} />
+                <Row label="Wind Direction" value={w.wind_direction != null ? `${w.wind_direction} degrees` : '-'} />
+                <Row label="Temperature" value={w.temperature != null ? `${w.temperature}F` : '-'} highlight={tempViolation} />
+                <Row label="Humidity" value={w.humidity != null ? `${w.humidity}%` : '-'} />
+                <Row label="Conditions" value={w.conditions ?? '-'} />
+                <Row label="Data Source" value={w.source} />
+                <Row label="Captured" value={new Date(w.captured_at).toLocaleString()} />
+              </>
+            ) : (
+              <p className="text-sm" style={{ color: BRAND.textLight }}>
+                No weather data captured (no GPS provided at submit time).
+              </p>
+            )}
+          </Card>
+          <Card title="Product Label Requirements">
+            <Row label="Max Wind Speed" value={p?.max_wind_speed != null ? `${p.max_wind_speed} mph` : 'Not specified'} highlight={windViolation} />
+            <Row label="Temperature Range" value={p?.min_temp != null && p?.max_temp != null ? `${p.min_temp}F - ${p.max_temp}F` : 'Not specified'} highlight={tempViolation} />
+            <Row label="Re-entry Interval" value={p?.re_entry_interval_hours != null ? `${p.re_entry_interval_hours} hours` : 'Not specified'} />
+            <Row label="Pre-harvest Interval" value={p?.pre_harvest_interval_days != null ? `${p.pre_harvest_interval_days} days` : 'Not specified'} />
+          </Card>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <ExportButton applicationId={app.id} />
+      </div>
+    </div>
+  )
+}
+
+function Card({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-lg border bg-white p-4" style={{ borderColor: BRAND.border }}>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide" style={{ color: BRAND.primary }}>{title}</h2>
+      <dl className="space-y-2 text-sm">{children}</dl>
+    </section>
+  )
+}
+
+function Row({ label, value, highlight = false }: { label: string; value: ReactNode; highlight?: boolean }) {
+  return (
+    <div className="flex justify-between gap-2">
+      <dt style={{ color: BRAND.textLight }}>{label}</dt>
+      <dd className="text-right" style={{ color: highlight ? BRAND.error : BRAND.text, fontWeight: highlight ? 600 : 400 }}>
+        {value}
+      </dd>
+    </div>
+  )
+}
