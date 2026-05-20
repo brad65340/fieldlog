@@ -12,7 +12,9 @@ function Row({ label, value, highlight = false }: { label: string; value: string
   return (
     <View style={styles.row}>
       <Text style={styles.label}>{label}:</Text>
-      <Text style={highlight ? styles.valueViolation : styles.value}>{value}</Text>
+      <Text style={highlight ? styles.valueViolation : styles.value}>
+        {highlight ? `[!] ${value}` : value}
+      </Text>
     </View>
   )
 }
@@ -56,8 +58,8 @@ export function AuditPDF({ app }: { app: ApplicationDetailRow }) {
 
         {flagged && flags.length > 0 && (
           <View style={styles.flagsBox}>
-            <Text style={styles.flagsTitle}>COMPLIANCE FLAGS DETECTED</Text>
-            {flags.map((f, i) => <Text key={i} style={styles.flagItem}>- {f}</Text>)}
+            <Text style={styles.flagsTitle}>[!] COMPLIANCE FLAGS DETECTED</Text>
+            {flags.map((f, i) => <Text key={i} style={styles.flagItem}>[!] {f}</Text>)}
             <Text style={styles.flagsDisclaimer}>
               This application was logged with conditions that did not meet all EPA label requirements.
             </Text>

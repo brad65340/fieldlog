@@ -58,26 +58,29 @@ export const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#fff',
   },
+  // Flag box: white-on-solid-red for maximum contrast in any color perception.
+  // Same colorblind discipline as the in-app status dots (mod-3.3): never rely
+  // on red text on a reddish background -- invert to high-contrast and use a
+  // [!] glyph prefix so the warning reads without color too.
   flagsBox: {
-    backgroundColor: COMPLIANCE_PALETTE.flagged.bg,
-    borderLeft: `3pt solid ${COMPLIANCE_PALETTE.flagged.solid}`,
+    backgroundColor: COMPLIANCE_PALETTE.flagged.solid,
     padding: 10,
     marginBottom: 12,
   },
   flagsTitle: {
     fontSize: 10,
     fontFamily: 'Helvetica-Bold',
-    color: COMPLIANCE_PALETTE.flagged.solid,
+    color: '#fff',
     marginBottom: 4,
   },
   flagItem: {
     fontSize: 9,
-    color: COMPLIANCE_PALETTE.flagged.solid,
+    color: '#fff',
     marginTop: 2,
   },
   flagsDisclaimer: {
     fontSize: 8,
-    color: COMPLIANCE_PALETTE.flagged.solid,
+    color: '#fff',
     marginTop: 6,
     fontStyle: 'italic',
   },
@@ -93,10 +96,14 @@ export const styles = StyleSheet.create({
   row: { flexDirection: 'row', marginBottom: 3 },
   label: { fontSize: 8, color: BRAND.textLight, width: 130 },
   value: { fontSize: 9, color: BRAND.text, flex: 1 },
+  // Violation values: bold + red + underline + a [!] glyph prefix at the call
+  // site. Three color-independent signals so the row reads as a problem even
+  // in grayscale or red-green colorblind perception.
   valueViolation: {
     fontSize: 9,
     color: COMPLIANCE_PALETTE.flagged.solid,
     fontFamily: 'Helvetica-Bold',
+    textDecoration: 'underline',
     flex: 1,
   },
   footer: {
