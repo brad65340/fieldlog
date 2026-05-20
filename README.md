@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FieldLog
 
-## Getting Started
+**Contractors logged. You verify. Compliant operations.**
 
-First, run the development server:
+A mobile-first pesticide application compliance and contractor management platform for mid-to-large agricultural operations. Contractors log every spray; managers verify compliance against EPA label rules and live weather; every record is immutable and audit-ready. Built for Codefi Vibeathon 2026, Problem 2.
+
+---
+
+## Live demo
+
+**Production URL:** https://fieldlog-kappa.vercel.app
+
+| Role | Email | Password |
+|---|---|---|
+| Manager | jake@caspianag.com | FieldlogDemo2026! |
+| Contractor (Maria Santos) | maria@caspianag.com | FieldlogDemo2026! |
+| Contractor (Tyler Reed) | tyler@caspianag.com | FieldlogDemo2026! |
+
+The seed includes 8 applications: 5 compliant, 2 flagged (one wind violation on Maria/North Field/Roundup, one temperature violation on Tyler/South Creek/Engenia), and 1 pending. Both flagged applications drive the compliance engine's "money moment" in the manager dashboard.
+
+---
+
+## What it does
+
+- **Contractors** log spray applications from the field on mobile. GPS captured at submit; live weather pulled from OpenWeatherMap at that exact location.
+- **The compliance engine** checks each application against the product's EPA label limits (wind speed, temperature range, max application rate) and tags violations.
+- **Managers** see every application in real time, drill into any audit record, and download tamper-proof PDF reports for EPA inspections.
+
+Applications are **immutable after submit** — no UPDATE or DELETE path exists anywhere in the API.
+
+---
+
+## Tech stack
+
+Next.js 15 (App Router) · TypeScript strict · Tailwind v4 · Supabase (Postgres + Auth + RLS) · Recharts · Leaflet (Esri satellite tiles) · @react-pdf/renderer · OpenWeatherMap · Upstash Redis (rate limiting) · Vercel.
+
+---
+
+## Local development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.local.example .env.local   # fill in Supabase + OWM + Upstash keys
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [BLUEPRINT.md](BLUEPRINT.md) for architecture, [SECURITY.md](SECURITY.md) for the security model, and [docs/handoffs/](docs/handoffs/) for the build log across phases.

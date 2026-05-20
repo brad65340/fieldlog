@@ -222,7 +222,26 @@ after the renumbering -- the original doc skipped 5.9). All shipped:
 
 ### Module 5.10 -- Vercel deploy
 
-Pending after this handoff.
+**Shipped.** Production live at https://fieldlog-kappa.vercel.app.
+
+First deploy hit MIDDLEWARE_INVOCATION_FAILED 500. Root cause was env
+vars in Vercel scope. Fixed in two parts: (1) committed `191dbb4`
+adding an explicit pre-check in `src/middleware.ts` that throws a
+readable "Missing required env var(s): X" instead of the cryptic
+Supabase URL-parser stack trace -- middleware in stable Next 15 always
+runs on Edge, so the diagnostic message is what carries into Vercel
+function logs; (2) verified all six env vars (`NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+`OPENWEATHERMAP_API_KEY`, `UPSTASH_REDIS_REST_URL`,
+`UPSTASH_REDIS_REST_TOKEN`) are present with Production scope.
+
+Production verification completed end-to-end:
+- Landing renders cleanly
+- Manager + contractor logins land on correct dashboards
+- Flagged applications visible in red on the manager dashboard
+- Audit PDF downloads
+- Per-field weather + 5-day forecast pulls live OWM data
+- Satellite map tiles load from Esri
 
 ---
 
@@ -325,10 +344,9 @@ Pending after this handoff.
   validation + no DB queries / no RLS impact
 - [x] Handoff written (this file)
 
-Outstanding for 5.10:
-- [ ] Vercel deploy
-- [ ] All env vars set in Vercel project
-- [ ] Production verification: manager + contractor login flows,
+- [x] Vercel deploy live at https://fieldlog-kappa.vercel.app
+- [x] All env vars set in Vercel project (Production scope)
+- [x] Production verification: manager + contractor login flows,
   flagged demo case visible, PDF export works
 
 ---
